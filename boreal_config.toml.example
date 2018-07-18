@@ -1,0 +1,11 @@
+[mongo]
+db="borealengine_1"
+server="localhost"
+
+[ws]
+host_address="localhost:3023"
+
+[general]
+debug=true
+log_name="borealengine_1"
+delta_micro=15000

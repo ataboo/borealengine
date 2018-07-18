@@ -1,0 +1,5 @@
+server.key
+server.crt
+borealengine
+.idea
+boreal_config.toml
