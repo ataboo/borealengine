@@ -1,0 +1,11 @@
+base:
+  speed: 10
+  size:
+    r: 0.5
+attack:
+  damage: 5
+  offset:
+    x: 0
+    y: 0.5
+  radius:
+    r: 0.5

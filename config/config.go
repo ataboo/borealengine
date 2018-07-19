@@ -4,40 +4,45 @@ import (
 	"log"
 
 	"github.com/BurntSushi/toml"
-	"fmt"
+	"os"
 )
 
 func init() {
 	Config.Read()
 }
 
-var Config BorealConfig
+var Config borealConfig
 
 // Represents database server and credentials
-type BorealConfig struct {
-	Mongo mongo
-	Ws ws
+type borealConfig struct {
+	Mongo   mongo
+	Ws      ws
 	General general
 }
 
 type mongo struct {
-	DB   string
-	Server string
+	EngineDB      string
+	EngineServer  string
+	AccountDB     string
+	AccountServer string
 }
 
 type ws struct {
 	HostAddress string
+	ReadBuffer int
+	WriteBuffer int
+	EnforceOrigin bool
 }
 
 type general struct {
-	LogName string
-	Debug bool
+	LogName    string
+	Debug      bool
 	DeltaMicro int
 }
 
 // Read and parse the configuration file
-func (c *BorealConfig) Read() {
-	confPath := "boreal_config.toml"
+func (c *borealConfig) Read() {
+	confPath := c.ResourceRoot()+"boreal_config.toml"
 	//flaggy.String(&confPath, "b", "bconf", "Location of a boreal_config.toml")
 	//flaggy.Parse()
 
@@ -45,6 +50,13 @@ func (c *BorealConfig) Read() {
 		log.Println("Error loading boreal_config.toml, check boreal_config.toml.example")
 		log.Fatal(err)
 	}
+}
 
-	fmt.Printf("\nLoaded config: %+v", c)
+func (c *borealConfig) ResourceRoot() string {
+	resourceRoot, ok := os.LookupEnv("BOREALROOT")
+	if !ok {
+		resourceRoot = "./"
+	}
+
+	return resourceRoot
 }

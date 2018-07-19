@@ -1,11 +1,17 @@
-[mongo]
-db="borealengine_1"
-server="localhost"
+[Mongo]
+AccountDB="gowssrv_db"
+AccountServer="localhost"
 
-[ws]
-host_address="localhost:3023"
+EngineDB = "borealengine_1"
+EngineServer = "localhost"
 
-[general]
-debug=true
-log_name="borealengine_1"
-delta_micro=15000
+[Ws]
+HostAddress = "localhost:3023"
+ReadBuffer = 1024
+WriteBuffer = 1024
+EnforceOrigin = false
+
+[General]
+Debug = true
+LogName = "borealengine_1"
+DeltaMicro = 15000
