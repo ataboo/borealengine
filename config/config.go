@@ -43,8 +43,6 @@ type general struct {
 // Read and parse the configuration file
 func (c *borealConfig) Read() {
 	confPath := c.ResourceRoot()+"boreal_config.toml"
-	//flaggy.String(&confPath, "b", "bconf", "Location of a boreal_config.toml")
-	//flaggy.Parse()
 
 	if _, err := toml.DecodeFile(confPath, &c); err != nil {
 		log.Println("Error loading boreal_config.toml, check boreal_config.toml.example")

@@ -8,27 +8,42 @@ import (
 	"github.com/ataboo/borealengine/config"
 )
 
-var SpeciesConfigs = map[string]models.Species{}
+var SpeciesConfigs map[string]models.Species
+var Names []string
 
 type Types struct {
-	Names []string
+	TypeNames []string
 }
 
 func init() {
 	loadSpecies()
+	loadNames()
 }
 
-func loadSpecies() {
+func loadSpecies() (errs []string) {
+	errs = []string{}
+	SpeciesConfigs = map[string]models.Species{}
 	types := Types{}
 	LoadYamlResource("species/types", &types)
 
-	for _, name := range types.Names {
+	for _, name := range types.TypeNames {
 		loadedSpecies := models.Species{}
 		err := LoadYamlResource("species/"+name, &loadedSpecies)
-		if err == nil {
-			SpeciesConfigs[name] = loadedSpecies
+		if err != nil {
+			errs = append(errs, err.Error())
+			continue
 		}
+
+		SpeciesConfigs[name] = loadedSpecies
 	}
+
+	return errs
+}
+
+func loadNames() error {
+	err := LoadYamlResource("species/names", &Names)
+
+	return err
 }
 
 func LoadYamlResource(filepath string, out interface{}) error {
@@ -38,7 +53,7 @@ func LoadYamlResource(filepath string, out interface{}) error {
 		return err
 	}
 
-	err = yaml.Unmarshal(file, out)
+	err = yaml.UnmarshalStrict(file, out)
 	if err != nil {
 		log.Printf("\nfailed to unmarshal file: %s with %s", filepath, err)
 		return err
@@ -46,3 +61,8 @@ func LoadYamlResource(filepath string, out interface{}) error {
 
 	return nil
 }
+
+//func NewCreature(spawnPoint models.Transform) *models.Creature {
+//
+//}
+
