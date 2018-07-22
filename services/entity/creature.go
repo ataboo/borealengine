@@ -4,7 +4,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
-	"github.com/ataboo/borealengine/models"
+	"github.com/ataboo/borealengine/services/entity/models"
 	"github.com/ataboo/borealengine/config"
 )
 
@@ -62,7 +62,5 @@ func LoadYamlResource(filepath string, out interface{}) error {
 	return nil
 }
 
-//func NewCreature(spawnPoint models.Transform) *models.Creature {
-//
-//}
+
 

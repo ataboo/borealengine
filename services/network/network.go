@@ -10,14 +10,10 @@ import (
 	"encoding/json"
 	"github.com/ataboo/gowssrv/models"
 	"github.com/satori/go.uuid"
-	"github.com/op/go-logging"
-	"github.com/ataboo/gowssrv/accountstorage"
 )
 
 var tlsCertPath string
 var tlsKeyPath string
-
-var Logger = logging.MustGetLogger(Config.General.LogName)
 
 func init() {
 	tlsCertPath = "server.crt"
@@ -26,11 +22,19 @@ func init() {
 	// TODO flaggy if needed
 }
 
-type NetworkService struct {
-	upgrader websocket.Upgrader
+type UserConn struct {
+	User models.UserPublic
+	Conn *websocket.Conn
 }
 
-func (n *NetworkService) Start(ctx context.Context) {
+type ConnectChan chan UserConn
+
+type Service struct {
+	upgrader websocket.Upgrader
+	OnConnect ConnectChan
+}
+
+func NewService() *Service {
 	var checkOriginFunc func(r *http.Request) bool
 	if !Config.Ws.EnforceOrigin {
 		// In development, using certain ws clients might show as a false positive for a cross-site attack.
@@ -39,15 +43,20 @@ func (n *NetworkService) Start(ctx context.Context) {
 		}
 	}
 
-	n.upgrader = websocket.Upgrader{
-		CheckOrigin: checkOriginFunc,
-		ReadBufferSize: Config.Ws.ReadBuffer,
-		WriteBufferSize: Config.Ws.WriteBuffer,
+	return &Service{
+		websocket.Upgrader{
+			CheckOrigin: checkOriginFunc,
+			ReadBufferSize: Config.Ws.ReadBuffer,
+			WriteBufferSize: Config.Ws.WriteBuffer,
+		},
+		make(ConnectChan),
 	}
+}
 
+func (n *Service) Start(ctx context.Context) {
 	srv := &http.Server{Addr: Config.Ws.HostAddress}
 
-	srv.Handler = tokenMiddleware(n.handler)
+	srv.Handler = n.tokenMiddleware(n.upgradeWs)
 
 	go func() {
 		srv.ListenAndServeTLS(tlsCertPath, tlsKeyPath)
@@ -67,45 +76,51 @@ func (n *NetworkService) Start(ctx context.Context) {
 	}
 }
 
-func (n *NetworkService) handler(w http.ResponseWriter, r *http.Request) {
+func (n *Service) upgradeWs(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/ws" {
 		jsonErrorResponse(w, 404, "Not Found")
 		return
 	}
 
 	conn , err := n.upgrader.Upgrade(w, r, w.Header())
-
 	if err != nil {
 		w.WriteHeader(400)
 		w.Write([]byte("Failed to upgrade connection"))
 	}
 
-	w.WriteHeader(200)
-	w.Write([]byte("Tadaa!"))
+	select {
+		case n.OnConnect <- UserConn{r.Context().Value("user").(models.UserPublic), conn}:
+			return
+		case <-time.After(time.Second * 1):
+			Logger.Errorf("timed out passing user connect to engine")
+			conn.Close()
+			jsonErrorResponse(w, 500, "error connecting")
+			return
+	}
 }
 
-func tokenMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (n *Service) tokenMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, err := userFromToken(r.Header.Get("Authorization"))
+		user, err := n.userFromToken(r.Header.Get("Authorization"))
 		if err != nil {
 			jsonErrorResponse(w, 401, "not authorized")
 			return
 		}
 
 		// Add user to request for future handlers.
-		r = r.WithContext(context.WithValue(r.Context(), "user", user))
+		r = r.WithContext(context.WithValue(r.Context(), "user", user.ToPublic()))
 
 		next(w, r)
 	})
 }
 
-func userFromToken(token string) (models.User, error) {
+func (n *Service) userFromToken(token string) (models.User, error) {
 	parsed, err := uuid.FromString(token)
 	if err != nil || parsed.Version() != uuid.V4 {
 		Logger.Debug("Token not valid UUID4")
 	}
 
-	user, err := accountstorage.Users.BySession(token)
+	user, err := accounts.GetByToken(token)
 	if err != nil {
 		Logger.Debug("No user found with session id")
 		return user, err
@@ -125,6 +140,6 @@ func jsonErrorResponse(w http.ResponseWriter, code int, payload interface{}) {
 	jsonResponse(w, code, map[string]interface{}{"error": payload})
 }
 
-func (n *NetworkService) Update(delta time.Duration) {
+func (n *Service) Update(delta time.Duration) {
 	//
 }

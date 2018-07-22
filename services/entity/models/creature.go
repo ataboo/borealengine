@@ -2,12 +2,16 @@ package models
 
 import (
 	"gopkg.in/mgo.v2/bson"
+	"github.com/ataboo/borealengine/mathies"
 	"time"
 )
 
-type Controller interface {
-	Update(delta time.Duration, ctx interface{})
+type Cooldowns struct {
+	Attack time.Time
+	Transition time.Time
+	Chat time.Time
 }
+
 
 type Creature struct {
 	ID bson.ObjectId
@@ -16,12 +20,15 @@ type Creature struct {
 	Transform Transform
 	Vitals    Vitals
 
+	Velocity mathies.Vector2
+
 	// Attached To
-	// Contacts
 
 	Species Species
 
-	Control Controller
+	Attacking bool
+	Cooldowns Cooldowns
+
 }
 
 func (c *Creature) GetId() bson.ObjectId {

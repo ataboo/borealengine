@@ -2,7 +2,7 @@ package entity
 
 import (
 	"testing"
-	"github.com/ataboo/borealengine/models"
+	"github.com/ataboo/borealengine/services/entity/models"
 )
 
 func TestBuildsSingleBear(t *testing.T) {

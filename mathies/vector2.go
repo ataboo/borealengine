@@ -3,8 +3,8 @@ package mathies
 import "math"
 
 type Vector2 struct {
-	X float32
-	Y float32
+	X float32 `json:"x"`
+	Y float32 `json:"y"`
 }
 
 func (v1 Vector2) Add(v2 Vector2) Vector2 {

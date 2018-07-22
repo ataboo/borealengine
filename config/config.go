@@ -5,13 +5,24 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"os"
+	"github.com/op/go-logging"
 )
+
+const (
+	EnvTest = Env(iota)
+	EnvProd
+	EnvLocal
+)
+
+var Config borealConfig
+var Logger *logging.Logger
 
 func init() {
 	Config.Read()
+	Logger = logging.MustGetLogger(Config.General.LogName)
 }
 
-var Config borealConfig
+type Env uint8
 
 // Represents database server and credentials
 type borealConfig struct {
@@ -32,6 +43,7 @@ type ws struct {
 	ReadBuffer int
 	WriteBuffer int
 	EnforceOrigin bool
+	SendDeltaMicro int
 }
 
 type general struct {
@@ -57,4 +69,20 @@ func (c *borealConfig) ResourceRoot() string {
 	}
 
 	return resourceRoot
+}
+
+func (c *borealConfig) Environment() Env {
+	env, ok := os.LookupEnv("APP_ENV")
+	if !ok {
+		return EnvLocal
+	}
+
+	switch env {
+	case "testing":
+		return EnvTest
+	case "prod", "production":
+		return EnvProd
+	default:
+		return EnvLocal
+	}
 }

@@ -1,25 +1,21 @@
 package services
 
 import (
-	. "github.com/ataboo/borealengine/config"
 	"fmt"
 	"time"
-	"github.com/op/go-logging"
 	"context"
 	"github.com/ataboo/borealengine/services/network"
+	"github.com/ataboo/borealengine/config"
+	"github.com/ataboo/borealengine/services/entity"
 )
-
-type Service interface {
-	Start(ctx context.Context)
-	Update(delta time.Duration)
-}
 
 func NewEngine() *Engine {
 	engine := Engine{
 		false,
 		0,
 		time.Time{},
-		[]Service{&network.NetworkService{}},
+		network.NewService(),
+		entity.Service{},
 	}
 
 	return &engine
@@ -30,17 +26,14 @@ type Engine struct {
 	running  bool
 	delta    time.Duration
 	lastTick time.Time
-	services []Service
+	network *network.Service
+	entity entity.Service
 }
-
-var Logger *logging.Logger
 
 func (e *Engine) Start() (context.CancelFunc, error) {
 	if e.running {
 		return nil, fmt.Errorf("engine already running")
 	}
-
-	Logger = logging.MustGetLogger(Config.General.LogName)
 
 	return e.startLoop()
 }
@@ -48,7 +41,7 @@ func (e *Engine) Start() (context.CancelFunc, error) {
 func (e *Engine) startLoop() (context.CancelFunc, error) {
 	ctx, stop := context.WithCancel(context.Background())
 
-	targetDelta := time.Duration(Config.General.DeltaMicro) * time.Microsecond
+	targetDelta := time.Duration(config.Config.General.DeltaMicro) * time.Microsecond
 	deltaTick := time.Tick(targetDelta)
 	e.lastTick = time.Now().Add(-targetDelta)
 	e.startServices(ctx)
@@ -64,6 +57,8 @@ func (e *Engine) startLoop() (context.CancelFunc, error) {
 					e.lastTick = time.Now()
 
 					e.updateServices()
+				case userConn := <-e.network.OnConnect:
+					e.entity.PlayerConnected(userConn.User, userConn.Conn)
 				default:
 					//
 				}
@@ -77,13 +72,14 @@ func (e *Engine) startLoop() (context.CancelFunc, error) {
 }
 
 func (e *Engine) startServices(ctx context.Context) error {
-	for _, s := range e.services {
-		s.Start(ctx)
-	}
+	e.network.Start(ctx)
+	e.entity.Start(ctx)
 
 	return nil
 }
 
 func (e *Engine) updateServices() error {
+	e.entity.Update(e.delta)
+
 	return nil
 }

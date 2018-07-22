@@ -1,12 +1,12 @@
 package entity
 
 import (
-	"github.com/ataboo/borealengine/models"
 	"fmt"
 	"strings"
 	"gopkg.in/mgo.v2/bson"
 	"math/rand"
 	"time"
+	"github.com/ataboo/borealengine/services/entity/models"
 )
 
 var CreatureBuilder = cBuilder{}
