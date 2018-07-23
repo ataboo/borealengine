@@ -18,7 +18,17 @@ var Config borealConfig
 var Logger *logging.Logger
 
 func init() {
+	// Get logger so config read has it.
+	Logger = logging.MustGetLogger(Config.General.LogName)
+
 	Config.Read()
+
+	logLevel := logging.INFO
+	if Config.General.Debug {
+		logLevel = logging.DEBUG
+	}
+	logging.SetLevel(logLevel, Config.General.LogName)
+	// Get logger again with level change.
 	Logger = logging.MustGetLogger(Config.General.LogName)
 }
 
@@ -57,8 +67,15 @@ func (c *borealConfig) Read() {
 	confPath := c.ResourceRoot()+"boreal_config.toml"
 
 	if _, err := toml.DecodeFile(confPath, &c); err != nil {
-		log.Println("Error loading boreal_config.toml, check boreal_config.toml.example")
+		Logger.Error("error loading boreal_config.toml, check boreal_config.toml.example")
 		log.Fatal(err)
+	}
+
+	if c.Environment() == EnvTest {
+		testingConf := c.ResourceRoot()+"boreal_config.testing.toml"
+		if _, err := toml.DecodeFile(testingConf, &c); err != nil {
+			Logger.Errorf("failed to find testing config at: "+testingConf)
+		}
 	}
 }
 

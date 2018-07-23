@@ -7,6 +7,7 @@ import (
 
 type Control struct {
 	npc models.NPC
+	LastUpdate time.Time
 }
 
 func (c *Control) UpdateBehavior(delta time.Duration) {

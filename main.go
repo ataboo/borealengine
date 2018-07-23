@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/ataboo/borealengine/services"
 	"log"
-	"github.com/op/go-logging"
 	"github.com/ataboo/borealengine/config"
 	"fmt"
 )
@@ -12,12 +11,6 @@ var engine *services.Engine
 
 func main() {
 	fmt.Printf("\n%+v",config.Config)
-
-	logLevel := logging.INFO
-	if config.Config.General.Debug {
-		logLevel = logging.DEBUG
-	}
-	logging.SetLevel(logLevel, config.Config.General.LogName)
 
 	engine = services.NewEngine()
 

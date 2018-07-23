@@ -24,4 +24,3 @@ func TestLoadsNames(t *testing.T) {
 		t.Error("No names were loaded")
 	}
 }
-

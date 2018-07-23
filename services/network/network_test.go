@@ -21,7 +21,7 @@ func TestTokenMiddleWare(t *testing.T) {
 	service := NewService()
 
 	// Mock method for getting user via token/sessionId
-	(accounts.(*FakeAccountDao)).FakeTTU = func(token string) (models.User, error) {
+	(accounts.(*FakeAccountDAO)).FakeTTU = func(token string) (models.User, error) {
 		if token != fakeToken.String() {
 			return models.User{}, fmt.Errorf("invalid token")
 		}

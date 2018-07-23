@@ -5,6 +5,7 @@ import (
 	"github.com/ataboo/borealengine/services/entity/models"
 	"github.com/ataboo/borealengine/config"
 	"github.com/gorilla/websocket"
+	"github.com/ataboo/borealengine/services/entity"
 )
 
 type Control struct {
@@ -41,6 +42,16 @@ func (c *Control) applyServerUpdate(update models.ServerUpdate) {
 
 	//TODO: chat
 	// TODO: transition
+}
+
+func (c *Control) UpdateNeighbours(delta time.Duration) {
+
+}
+
+func (c *Control) FindNeighbours(delta time.Duration) []entity.NPCControl {
+	//There's probably a better way to do this.
+
+
 }
 
 func (c *Control) ResolvePhysics(delta time.Duration) {

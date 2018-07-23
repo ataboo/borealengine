@@ -16,10 +16,9 @@ var tlsCertPath string
 var tlsKeyPath string
 
 func init() {
+	//TODO config cert path.
 	tlsCertPath = "server.crt"
 	tlsKeyPath = "server.key"
-
-	// TODO flaggy if needed
 }
 
 type UserConn struct {
@@ -27,29 +26,17 @@ type UserConn struct {
 	Conn *websocket.Conn
 }
 
-type ConnectChan chan UserConn
+type UserConnChan chan UserConn
 
 type Service struct {
-	upgrader websocket.Upgrader
-	OnConnect ConnectChan
+	upgrader  Upgrader
+	OnConnect UserConnChan
 }
 
 func NewService() *Service {
-	var checkOriginFunc func(r *http.Request) bool
-	if !Config.Ws.EnforceOrigin {
-		// In development, using certain ws clients might show as a false positive for a cross-site attack.
-		checkOriginFunc = func(r *http.Request) bool {
-			return true
-		}
-	}
-
 	return &Service{
-		websocket.Upgrader{
-			CheckOrigin: checkOriginFunc,
-			ReadBufferSize: Config.Ws.ReadBuffer,
-			WriteBufferSize: Config.Ws.WriteBuffer,
-		},
-		make(ConnectChan),
+		getUpgraderForEnv(),
+		make(UserConnChan),
 	}
 }
 

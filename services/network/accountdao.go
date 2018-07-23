@@ -14,7 +14,7 @@ func init() {
 	if Config.Environment() != EnvTest {
 		accounts = &MgoAccountDAO{}
 	} else {
-		accounts = &FakeAccountDao{}
+		accounts = &FakeAccountDAO{}
 	}
 }
 
@@ -60,11 +60,11 @@ func (a *MgoAccountDAO) connect() error {
 
 type tokenToUser func(token string) (models.User, error)
 
-type FakeAccountDao struct {
+type FakeAccountDAO struct {
 	FakeTTU tokenToUser
 }
 
-func (a *FakeAccountDao) GetByToken(token string) (user models.User, err error) {
+func (a *FakeAccountDAO) GetByToken(token string) (user models.User, err error) {
 	return a.FakeTTU(token)
 }
 
